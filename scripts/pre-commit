@@ -1,0 +1,52 @@
+#!/bin/sh
+set -uo pipefail 
+
+REPOROOT=$(git rev-parse --show-toplevel)
+
+# execute the entire script from root of repo to ensure patch works
+cd "${REPOROOT}" || exit
+cxx_exts="\.(c|h|cc|cu|cpp|cxx|hpp|ixx|cppm)$"
+for added_file in $(git diff --diff-filter=A --name-only --cached \
+	| grep -E "${cxx_exts}")
+do
+  clang-format -i "${added_file}" && git add "${added_file}"
+done
+
+CHANGED_THIS_COMMIT=$(git diff --diff-filter=M --name-only --cached \
+	| grep -E "${cxx_exts}")
+for changed_file in ${CHANGED_THIS_COMMIT}
+do
+  # --cached gets us only staged changes; clang-format-diff wants -U0
+  formatted_changes=$(git diff -U0 --no-color --cached "${changed_file}" | \
+    "${REPOROOT}"/scripts/clang-format-diff -p1 -v)
+  # at least this version of clang-diff-format exits with 1
+  # whenever it generates a formatting so can't check exit code or set -e
+  if [ $? -eq 1 ] && [ -n "$formatted_changes" ]; then
+    # saving unstaged changes to a variable
+    # -U1 enables context of 1 line; since clang-format-diff add/remove lines,
+    # we want a litte bit of context but not too much
+    unstaged_changes=$(git diff -U1 --no-color "${changed_file}") 
+    if [ -n "${unstaged_changes}" ]; then git restore "${changed_file}" ; fi
+    # by default apply will not touch working tree if any hunk fails to apply
+    echo "${formatted_changes}" | git apply --whitespace=fix -v && \
+      # check if the unstaged changes will apply cleanly,
+      # apply format only if the diff is applicable
+      echo "${unstaged_changes}" | \
+	      git apply --recount -C1 --allow-empty -v --check && \
+      git add "${changed_file}" ;
+    if [ $? -ne 0 ]; then
+      # unstaged changes did not apply cleanly or otherwise failed;
+      # restore to original state
+      echo "${changed_file} did not apply cleanly"
+      git restore "${changed_file}"
+    fi;
+    # now, if file had unstaged changes, restore those without formatting
+    # echo "${...}" preserves new lines in the string variable;
+    # --recount because clang-format-diff likely changed line count of the file;
+    # -C1 match the -U1 when creating this diff of unstaged changes
+    echo "${unstaged_changes}" | git apply --recount -C1 --allow-empty -v
+    unset unstaged_changes
+  fi
+  unset formatted_changes 
+done
+
