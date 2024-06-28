@@ -40,13 +40,10 @@ static void VectorAdd_RawLoop(benchmark::State& state) {
   const auto b = rand_vec(num_elements);
   auto c = std::vector<double>(num_elements);
   for (auto _ : state) {
+    ::benchmark::DoNotOptimize(c);
     for (int x = 0; x < num_elements; ++x) {
       c[x] = a[x] + b[x];
     }
-  }
-  for (auto& x : c) {
-    x *= 2;
-    (void)x;
   }
 }
 BENCHMARK(VectorAdd_RawLoop);
@@ -87,17 +84,16 @@ struct VectorAdd : public ::benchmark::Fixture {
 BENCHMARK_DEFINE_F(VectorAdd, Valarray)(benchmark::State& st) {
   // this is reasonably fast, often a tiny bit faster than the raw loop
   for (auto _ : st) {
+    ::benchmark::DoNotOptimize(val_arr3);
     val_arr3 = val_arr1 + val_arr2;
-  }
-  for (auto& x : val_arr3) {
-    x *= 2;
-    (void)x;
   }
 }
 BENCHMARK_REGISTER_F(VectorAdd, Valarray);
 
 BENCHMARK_DEFINE_F(VectorAdd, EigenAdd)(benchmark::State& st) {
   for (auto _ : st) {
+    // somehow this doesn't need the DoNotOptimize directive, but valarray needs
+    // it
     v3 = v2 + v1;
   }
 }
