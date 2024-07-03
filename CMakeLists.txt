@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19) # generator expression
 
 project(bench LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS NO)
 # enable_testing()
@@ -26,11 +26,58 @@ set(MLX_BUILD_METAL ON CACHE INTERNAL "")
 set(MLX_METAL_JIT ON CACHE INTERNAL "")
 FetchContent_MakeAvailable(mlx)
 
+add_library(bench_compile_opts INTERFACE)
+add_library(bench::compile_opts ALIAS bench_compile_opts)
+
+target_compile_definitions(bench_compile_opts
+INTERFACE
+    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>,$<CONFIG:Debug>>:
+	_LIBCPP_DEBUG=0
+        _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
+        _LIBCPP_ENABLE_DEBUG_MODE=1
+        _LIBCPP_DEBUG_RANDOMIZE_UNSPECIFIED_STABILITY
+        _LIBCPP_DEBUG_STRICT_WEAK_ORDERING_CHECK
+    >
+    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>,$<CONFIG:Release>>:
+	_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_EXTENSIVE
+    >
+    $<$<CONFIG:RelWithDebInfo>:>
+    $<$<CONFIG:MinSizeRel>:>
+)
+
+target_compile_options(bench_compile_opts
+INTERFACE
+    $<$<CONFIG:Debug>:
+        -Og
+    >
+    $<$<CONFIG:Debug>:
+    	-Wall
+	-Wextra
+	-Wpedantic
+	-Wdouble-promotion
+	-Wno-sign-conversion
+	-Wmissing-field-initializers
+    >
+    $<$<AND:$<CXX_COMPILER_ID:AppleClang,Clang>,$<CONFIG:Debug,RelWithDebInfo>>:
+	-glldb
+    >
+    #$<$<CONFIG:Debug>:-fsanitize=address -fsanitize=undefined -fsanitize-trap>
+    $<$<CONFIG:Release,RelWithDebInfo>:-O3>
+    $<$<CXX_COMPILER_ID:AppleClang,Clang>:-fcolor-diagnostics>
+    -march=native
+)
+
+target_compile_features(bench_compile_opts
+INTERFACE
+    cxx_std_${CMAKE_CXX_STANDARD}
+)
+
 add_library(tutorial STATIC
     tutorial.cpp
 )
 target_link_libraries(tutorial
 PUBLIC
+    bench_compile_opts
     $<BUILD_INTERFACE:mlx>
 )
 add_executable(tutorial_main
@@ -45,16 +92,9 @@ add_executable(main
     main.cpp
 )
 
-target_compile_options(main
-PRIVATE
-    $<$<CONFIG:Debug>:-g3>
-    $<$<CONFIG:Debug,RelWithDebInfo>:-glldb>
-    $<$<CONFIG:Release,RelWithDebInfo>:-O3>
-    -march=native
-)
-
 target_link_libraries(main
 PRIVATE
+    bench_compile_opts
     tutorial
     Eigen3::Eigen
     benchmark::benchmark
