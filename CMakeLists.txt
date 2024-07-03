@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.19) # generator expression
 
 project(bench LANGUAGES CXX)
 
@@ -19,8 +19,10 @@ add_executable(main
 )
 
 target_compile_options(main
-PUBLIC
-    -O3
+PRIVATE
+    $<$<CONFIG:Debug>:-g3>
+    $<$<CONFIG:Debug,RelWithDebInfo>:-glldb>
+    $<$<CONFIG:Release,RelWithDebInfo>:-O3>
     -march=native
 )
 
@@ -30,5 +32,5 @@ PRIVATE
     benchmark::benchmark
     mlx
 )
-# https://stackoverflow.com/a/70398644
+
 
