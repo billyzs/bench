@@ -1,10 +1,15 @@
 cmake_minimum_required(VERSION 3.19) # generator expression
 
-project(bench LANGUAGES CXX)
+project(
+    bench
+    VERSION 0.0.1
+    LANGUAGES C CXX
+)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
-set(CMAKE_CXX_EXTENSIONS NO)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # enable_testing()
 include(cmake/Cache.cmake)
 enable_cache()
@@ -99,5 +104,4 @@ PRIVATE
     Eigen3::Eigen
     benchmark::benchmark
 )
-
 
