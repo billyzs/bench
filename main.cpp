@@ -8,6 +8,7 @@
 #include <random>
 #include <valarray>
 #include <vector>
+#include "tutorial.h"
 
 /*
  * def vector_add(a, b, c):
@@ -20,7 +21,6 @@ c = np.empty( num_elements, dtype=np.float64 )
 
 */
 
-inline constexpr size_t num_elements = 128 * 1024 * 1024;
 inline constexpr double seed = 0xbeefbabe;
 
 std::vector<double> rand_vec(size_t cnt) {
@@ -36,12 +36,12 @@ std::vector<double> rand_vec(size_t cnt) {
 }
 
 static void VectorAdd_RawLoop(benchmark::State& state) {
-  const auto a = rand_vec(num_elements);
-  const auto b = rand_vec(num_elements);
-  auto c = std::vector<double>(num_elements);
+  const auto a = rand_vec(numElements);
+  const auto b = rand_vec(numElements);
+  auto c = std::vector<double>(numElements);
   for (auto _ : state) {
     ::benchmark::DoNotOptimize(c);
-    for (int x = 0; x < num_elements; ++x) {
+    for (int x = 0; x < numElements; ++x) {
       c[x] = a[x] + b[x];
     }
   }
@@ -49,9 +49,9 @@ static void VectorAdd_RawLoop(benchmark::State& state) {
 BENCHMARK(VectorAdd_RawLoop);
 
 static void VectorAdd_StlVec(benchmark::State& state) {
-  const auto a = rand_vec(num_elements);
-  const auto b = rand_vec(num_elements);
-  auto c = std::vector<double>(num_elements);
+  const auto a = rand_vec(numElements);
+  const auto b = rand_vec(numElements);
+  auto c = std::vector<double>(numElements);
   for (auto _ : state) {
     std::transform(a.cbegin(), a.cend(), b.cbegin(), c.begin(), std::plus<>());
   }
@@ -59,21 +59,21 @@ static void VectorAdd_StlVec(benchmark::State& state) {
 BENCHMARK(VectorAdd_StlVec);
 
 struct VectorAdd : public ::benchmark::Fixture {
-  Eigen::VectorXd v1{num_elements};
-  Eigen::VectorXd v2{num_elements};
-  Eigen::VectorXd v3{num_elements};
+  Eigen::VectorXd v1{numElements};
+  Eigen::VectorXd v2{numElements};
+  Eigen::VectorXd v3{numElements};
   std::valarray<double> val_arr1; // can't use {} due to BENCHMARK macro
   std::valarray<double> val_arr2;
   std::valarray<double> val_arr3;
   void SetUp(::benchmark::State&) {
     v1.setRandom();
     v2.setRandom();
-    assert(v1.size() == num_elements);
+    assert(v1.size() == numElements);
     assert(v1.size() == v2.size());
     assert(v2.size() == v3.size());
-    val_arr1.resize(num_elements);
-    val_arr2.resize(num_elements);
-    val_arr3.resize(num_elements);
+    val_arr1.resize(numElements);
+    val_arr2.resize(numElements);
+    val_arr3.resize(numElements);
     assert(v2.size() == val_arr1.size());
     std::copy(v1.begin(), v1.end(), std::begin(val_arr1));
     std::copy(v2.begin(), v2.end(), std::begin(val_arr2));

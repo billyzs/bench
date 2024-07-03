@@ -13,6 +13,20 @@ find_package(Eigen3 3.4.0 REQUIRED)
 find_package(benchmark REQUIRED)
 find_package(MLX REQUIRED)
 
+add_library(tutorial STATIC
+    tutorial.cpp
+)
+target_link_libraries(tutorial
+PUBLIC
+    $<BUILD_INTERFACE:mlx>
+)
+add_executable(tutorial_main
+    tutorial_main.cpp
+)
+target_link_libraries(tutorial_main
+PRIVATE
+    tutorial
+)
 add_executable(main
     test_mlx.cpp
     main.cpp
@@ -28,9 +42,9 @@ PRIVATE
 
 target_link_libraries(main
 PRIVATE
+    tutorial
     Eigen3::Eigen
     benchmark::benchmark
-    mlx
 )
 
 
