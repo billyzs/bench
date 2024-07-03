@@ -1,30 +1,39 @@
 #include <benchmark/benchmark.h>
 #include <mlx/mlx.h>
 #include <cassert>
+#include <optional>
+#include "tutorial.h"
 
 using namespace mlx::core;
 
-inline constexpr size_t numElements = 1 << 28;
 struct MlxVector : public ::benchmark::Fixture {
-  array v1{0.0, complex64};
-  array v2{0.0, complex64};
-  array v3{0.0, complex64};
-  void SetUp(::benchmark::State&) {
-    v1 = random::normal({numElements});
-    v2 = random::normal({numElements});
-    v3 = random::normal({numElements});
-    assert(v1.size() == numElements);
-    assert(v2.size() == v1.size());
-    eval(v1);
-    eval(v2);
+  // once mlx arrays are included as data members of a subclass of Fixture
+  // program will segfault on start; tried multiple inheritance, direct
+  // inclusion of MlxVectorData, direct inclusion + rule of 5,
+  // all no dice. So far this seems to be the only way that works
+  // Maybe all data has to be decoupled from the fixture
+  std::optional<MlxVectorData> dd{};
+  void setup() {
+    dd = std::make_optional<MlxVectorData>(numElements);
   }
-  void TearDown(::benchmark::State&) {}
+  void SetUp(::benchmark::State&) override {
+    setup();
+  }
+  void teardown() {
+    dd.reset();
+  }
+  void TearDown(::benchmark::State&) override {
+    teardown();
+  }
+  ~MlxVector() {
+    teardown();
+  };
 };
 
 BENCHMARK_DEFINE_F(MlxVector, MlxAdd)(::benchmark::State& st) {
   for (auto _ : st) {
-    v3 = v1 + v2;
-    eval(v3);
+    dd->v3 = dd->v1 + dd->v2;
+    eval(dd->v3);
   }
 }
 BENCHMARK_REGISTER_F(MlxVector, MlxAdd);

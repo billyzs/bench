@@ -11,7 +11,19 @@ enable_cache()
 
 find_package(Eigen3 3.4.0 REQUIRED)
 find_package(benchmark REQUIRED)
-find_package(MLX REQUIRED)
+#find_package(MLX REQUIRED)
+include(FetchContent)
+FetchContent_Declare(
+    mlx
+    GIT_REPOSITORY https://github.com/ml-explore/mlx.git
+    GIT_TAG        v0.13.0
+    GIT_SHALLOW    TRUE
+)
+set(MLX_BUILD_TESTS OFF CACHE INTERNAL "")
+set(MLX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
+set(MLX_BUILD_BENCHMARKS OFF CACHE INTERNAL "")
+set(MLX_BUILD_METAL OFF CACHE INTERNAL "")
+FetchContent_MakeAvailable(mlx)
 
 add_library(tutorial STATIC
     tutorial.cpp
