@@ -7,10 +7,10 @@
 
 using namespace mlx::core;
 
-MlxVectorData::MlxVectorData(int numElements) {
-  v1 = random::normal({numElements});
-  v2 = random::normal({numElements});
-  v3 = random::normal({numElements});
+MlxVectorData::MlxVectorData(int numElements, mlx::core::Dtype dtype) {
+  v1 = random::normal({numElements}, dtype);
+  v2 = random::normal({numElements}, dtype);
+  v3 = random::normal({numElements}, dtype);
   eval(v1);
   eval(v2);
   eval(v3);

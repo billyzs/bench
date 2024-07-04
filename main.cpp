@@ -120,13 +120,14 @@ BENCHMARK_DEFINE_F(VectorAdd, StlAdd)(benchmark::State& st) {
   }
 }
 BENCHMARK_REGISTER_F(VectorAdd, StlAdd);
-void VectorAdd_Mlx(::benchmark::State& st) {
-  MlxVectorData d{1 << 28};
+void VectorAdd_Mlx(::benchmark::State& st, const mlx::core::Dtype dtype) {
+  MlxVectorData d(numElements * st.range(0), dtype);
   for (auto _ : st) {
     ::benchmark::DoNotOptimize(d.v3);
     d.v3 = d.v1 + d.v2;
     d.v3.eval();
   }
 }
-BENCHMARK(VectorAdd_Mlx);
+BENCHMARK_CAPTURE(VectorAdd_Mlx, Bfloat16, mlx::core::bfloat16)->DenseRange(1, 4, 1);
+BENCHMARK_CAPTURE(VectorAdd_Mlx, Float32, mlx::core::float32)->DenseRange(1, 2, 1);
 BENCHMARK_MAIN();
