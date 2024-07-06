@@ -107,6 +107,19 @@ target_link_libraries(tutorial_main
 PRIVATE
     tutorial
 )
+
+if(Eigen3_FOUND)
+    add_library(test_eigen STATIC
+        test_eigen.cpp
+    )
+    target_link_libraries(test_eigen
+    PRIVATE
+        Eigen3::Eigen
+        bench_compile_opts
+        benchmark::benchmark
+    )
+endif()
+
 add_executable(main
     test_mlx.cpp
     main.cpp

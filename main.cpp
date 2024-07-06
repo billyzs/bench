@@ -1,6 +1,5 @@
 #include <benchmark/benchmark.h>
 
-#include <Eigen/Dense>
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -9,7 +8,9 @@
 #include <valarray>
 #include <vector>
 #include "tutorial.h"
+#ifdef HAS_OPENMP
 #include <omp.h>
+#endif
 
 /*
  * def vector_add(a, b, c):
@@ -21,54 +22,51 @@ b = np.random.rand( num_elements )
 c = np.empty( num_elements, dtype=np.float64 )
 
 */
-
 inline constexpr double seed = 0xbeefbabe;
-
-std::vector<double> rand_vec(size_t cnt) {
-  std::vector<double> ret(cnt);
+auto rand_vec(auto begin, auto end) {
   std::generate(
-      ret.begin(),
-      ret.end(),
+      begin,
+      end,
       [gen = std::mt19937(seed),
        dist = std::uniform_real_distribution<>(0, 1.0)]() mutable {
         return dist(gen);
       });
-  return ret;
+  return end;
 }
 
 static void VectorAdd_StlVec(benchmark::State& state) {
-  const auto a = rand_vec(numElements);
-  const auto b = rand_vec(numElements);
+  auto a = std::vector<double>(numElements);
+  auto b = std::vector<double>(numElements);
   auto c = std::vector<double>(numElements);
+  rand_vec(a.begin(), a.end());
+  rand_vec(b.begin(), b.end());
   for (auto _ : state) {
-    std::transform(a.cbegin(), a.cend(), b.cbegin(), c.begin(), std::plus<>());
+#ifdef _OPENMP // this is the OpenMP standard ppd
+#pragma omp parallel for
+#endif
+    for (auto x = 0; x < a.size(); ++x) {
+      c[x] = a[x] + b[x];
+    }
   }
 }
-BENCHMARK(VectorAdd_StlVec);
+BENCHMARK(VectorAdd_StlVec)->Name(
+#ifdef _OPENMP // this is the OpenMP standard ppd
+    "VectorAdd_StlVec_OpenMP"
+#else 
+    "VectorAdd_StlVec"
+#endif
+);
 
 struct VectorAdd : public ::benchmark::Fixture {
-  VectorAdd(){
-    const auto n = Eigen::nbThreads();
-    std::cout << "Eigen: using " << n << " threads\n";
-  }
-  Eigen::VectorXd v1{numElements};
-  Eigen::VectorXd v2{numElements};
-  Eigen::VectorXd v3{numElements};
   std::valarray<double> val_arr1; // can't use {} due to BENCHMARK macro
   std::valarray<double> val_arr2;
   std::valarray<double> val_arr3;
   void SetUp(::benchmark::State&) {
-    v1.setRandom();
-    v2.setRandom();
-    assert(v1.size() == numElements);
-    assert(v1.size() == v2.size());
-    assert(v2.size() == v3.size());
     val_arr1.resize(numElements);
     val_arr2.resize(numElements);
     val_arr3.resize(numElements);
+    rand_vec(std::begin(val_arr1), std::begin(val_arr1));
     assert(v2.size() == val_arr1.size());
-    std::copy(v1.begin(), v1.end(), std::begin(val_arr1));
-    std::copy(v2.begin(), v2.end(), std::begin(val_arr2));
   }
   void TearDown(::benchmark::State&) {}
 };
@@ -82,34 +80,17 @@ BENCHMARK_DEFINE_F(VectorAdd, Valarray)(benchmark::State& st) {
 }
 BENCHMARK_REGISTER_F(VectorAdd, Valarray);
 
-BENCHMARK_DEFINE_F(VectorAdd, EigenAdd)(benchmark::State& st) {
-  for (auto _ : st) {
-    // somehow this doesn't need the DoNotOptimize directive, but valarray needs
-    // it
-    v3 = v2 + v1;
-  }
-}
-BENCHMARK_REGISTER_F(VectorAdd, EigenAdd);
-
-BENCHMARK_DEFINE_F(VectorAdd, RawLoopAdd)(benchmark::State& st) {
-  // this measures mainly the efficiency of operator[] on Eigen Matrix
-  // the Eigen operator[] probably does more complex things than
-  // std::vector's operator[] and as expected , this performs miserably
-  for (auto _ : st) {
-#pragma omp parallel for
-    for (auto x = 0; x < v1.size(); ++x) {
-      v3[x] = v1[x] + v2[x];
-    }
-  }
-}
-BENCHMARK_REGISTER_F(VectorAdd, RawLoopAdd);
-
 BENCHMARK_DEFINE_F(VectorAdd, StlAdd)(benchmark::State& st) {
   // runs at about the same speed as EigenAdd
   // we are probably lucky here because std::plus<>() resolved to
   // Eigen's efficient version of add
   for (auto _ : st) {
-    std::transform(v1.begin(), v1.end(), v2.begin(), v3.begin(), std::plus<>());
+    std::transform(
+        std::begin(val_arr1),
+        std::end(val_arr1),
+        std::begin(val_arr2),
+        std::begin(val_arr3),
+        std::plus<>());
   }
 }
 BENCHMARK_REGISTER_F(VectorAdd, StlAdd);

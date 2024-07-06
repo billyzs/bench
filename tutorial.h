@@ -1,6 +1,6 @@
 #pragma once
 #include <mlx/mlx.h>
-inline constexpr size_t numElements = 1 << 27;
+#include "config.h"
 void array_basics();
 void automatic_differentiation();
 struct MlxVectorData {
