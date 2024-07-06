@@ -9,6 +9,7 @@
 #include <valarray>
 #include <vector>
 #include "tutorial.h"
+#include <omp.h>
 
 /*
  * def vector_add(a, b, c):
@@ -35,19 +36,6 @@ std::vector<double> rand_vec(size_t cnt) {
   return ret;
 }
 
-static void VectorAdd_RawLoop(benchmark::State& state) {
-  const auto a = rand_vec(numElements);
-  const auto b = rand_vec(numElements);
-  auto c = std::vector<double>(numElements);
-  for (auto _ : state) {
-    ::benchmark::DoNotOptimize(c);
-    for (int x = 0; x < numElements; ++x) {
-      c[x] = a[x] + b[x];
-    }
-  }
-}
-BENCHMARK(VectorAdd_RawLoop);
-
 static void VectorAdd_StlVec(benchmark::State& state) {
   const auto a = rand_vec(numElements);
   const auto b = rand_vec(numElements);
@@ -59,6 +47,10 @@ static void VectorAdd_StlVec(benchmark::State& state) {
 BENCHMARK(VectorAdd_StlVec);
 
 struct VectorAdd : public ::benchmark::Fixture {
+  VectorAdd(){
+    const auto n = Eigen::nbThreads();
+    std::cout << "Eigen: using " << n << " threads\n";
+  }
   Eigen::VectorXd v1{numElements};
   Eigen::VectorXd v2{numElements};
   Eigen::VectorXd v3{numElements};
@@ -104,6 +96,7 @@ BENCHMARK_DEFINE_F(VectorAdd, RawLoopAdd)(benchmark::State& st) {
   // the Eigen operator[] probably does more complex things than
   // std::vector's operator[] and as expected , this performs miserably
   for (auto _ : st) {
+#pragma omp parallel for
     for (auto x = 0; x < v1.size(); ++x) {
       v3[x] = v1[x] + v2[x];
     }

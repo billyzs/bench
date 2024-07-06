@@ -31,6 +31,12 @@ set(MLX_BUILD_METAL ON CACHE INTERNAL "")
 set(MLX_METAL_JIT ON CACHE INTERNAL "")
 FetchContent_MakeAvailable(mlx)
 
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    include(cmake/omp.cmake)
+    find_openmp_appleclang()
+else()
+    find_package(OpenMP)
+endif()
 add_library(bench_compile_opts INTERFACE)
 add_library(bench::compile_opts ALIAS bench_compile_opts)
 
@@ -101,6 +107,7 @@ target_link_libraries(main
 PRIVATE
     bench_compile_opts
     tutorial
+    $<$<BOOL:OpenMP_FOUND>:OpenMP::OpenMP_CXX>
     Eigen3::Eigen
     benchmark::benchmark
 )
