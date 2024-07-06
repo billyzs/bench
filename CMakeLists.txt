@@ -20,6 +20,7 @@ enable_cache()
 
 # official doc requires NO_MODULE which is the same as config
 add_subdirectory(cmake/deps/Eigen3)
+add_subdirectory(cmake/deps/MLX)
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     find_package(OpenMP)
 else()
@@ -38,25 +39,7 @@ FetchContent_Declare(
 )
 
 
-set(MLX_BUILD_TESTS OFF CACHE INTERNAL "")
-set(MLX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
-set(MLX_BUILD_BENCHMARKS OFF CACHE INTERNAL "")
-set(MLX_BUILD_METAL ON CACHE INTERNAL "")
-set(MLX_METAL_JIT ON CACHE INTERNAL "")
-FetchContent_Declare(
-    mlx
-    GIT_REPOSITORY https://github.com/ml-explore/mlx.git
-    GIT_TAG        v0.15.2
-    GIT_SHALLOW    TRUE
-    GIT_PROGRESS   TURE
-    # this makes FetchContent try find_package() with the supplied arguments first;
-    # since we are requiring a version that is not available in brew, it will fall
-    # back to building from source
-    EXCLUDE_FROM_ALL
-    FIND_PACKAGE_ARGS 0.15.2 EXACT
-)
 FetchContent_MakeAvailable(
-    mlx 
     benchmark
 )
 add_library(bench_compile_opts INTERFACE)

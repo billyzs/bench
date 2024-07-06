@@ -7,7 +7,7 @@
 #include <random>
 #include <valarray>
 #include <vector>
-#include "tutorial.h"
+#include "config.h"
 
 /*
  * def vector_add(a, b, c):
@@ -83,14 +83,5 @@ BENCHMARK_DEFINE_F(VectorAdd, StlAdd)(benchmark::State& st) {
   }
 }
 BENCHMARK_REGISTER_F(VectorAdd, StlAdd);
-void VectorAdd_Mlx(::benchmark::State& st, const mlx::core::Dtype dtype) {
-  MlxVectorData d(numElements * st.range(0), dtype);
-  for (auto _ : st) {
-    ::benchmark::DoNotOptimize(d.v3);
-    d.v3 = d.v1 + d.v2;
-    d.v3.eval();
-  }
-}
-BENCHMARK_CAPTURE(VectorAdd_Mlx, Bfloat16, mlx::core::bfloat16)->DenseRange(1, 4, 1);
-BENCHMARK_CAPTURE(VectorAdd_Mlx, Float32, mlx::core::float32)->DenseRange(1, 2, 1);
+
 BENCHMARK_MAIN();
