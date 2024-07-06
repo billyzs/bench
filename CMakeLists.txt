@@ -14,21 +14,27 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(cmake/Cache.cmake)
 enable_cache()
 
-find_package(Eigen3 3.4.0 REQUIRED)
+# official doc requires NO_MODULE which is the same as config
+find_package(Eigen3 3.4.0 REQUIRED CONFIG)
 find_package(benchmark REQUIRED)
-#find_package(MLX REQUIRED)
+
 include(FetchContent)
-FetchContent_Declare(
-    mlx
-    GIT_REPOSITORY https://github.com/ml-explore/mlx.git
-    GIT_TAG        v0.15.2
-    GIT_SHALLOW    TRUE
-)
 set(MLX_BUILD_TESTS OFF CACHE INTERNAL "")
 set(MLX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(MLX_BUILD_BENCHMARKS OFF CACHE INTERNAL "")
 set(MLX_BUILD_METAL ON CACHE INTERNAL "")
 set(MLX_METAL_JIT ON CACHE INTERNAL "")
+FetchContent_Declare(
+    mlx
+    GIT_REPOSITORY https://github.com/ml-explore/mlx.git
+    GIT_TAG        v0.15.2
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TURE
+    # this makes FetchContent try find_package() with the supplied arguments first;
+    # since we are requiring a version that is not available in brew, it will fall
+    # back to building from source
+    FIND_PACKAGE_ARGS 0.15.2 EXACT
+)
 FetchContent_MakeAvailable(mlx)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
