@@ -66,7 +66,6 @@ add_library(bench::compile_opts ALIAS bench_compile_opts)
 target_compile_definitions(bench_compile_opts
 INTERFACE
     $<$<AND:$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>,$<CONFIG:Debug>>:
-	_LIBCPP_DEBUG=0
         _LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
         _LIBCPP_ENABLE_DEBUG_MODE=1
         _LIBCPP_DEBUG_RANDOMIZE_UNSPECIFIED_STABILITY

@@ -66,7 +66,8 @@ struct VectorAdd : public ::benchmark::Fixture {
     val_arr2.resize(numElements);
     val_arr3.resize(numElements);
     rand_vec(std::begin(val_arr1), std::begin(val_arr1));
-    assert(v2.size() == val_arr1.size());
+    assert(val_arr2.size() == val_arr1.size());
+    assert(val_arr3.size() == val_arr1.size());
   }
   void TearDown(::benchmark::State&) {}
 };
