@@ -8,9 +8,6 @@
 #include <valarray>
 #include <vector>
 #include "tutorial.h"
-#ifdef HAS_OPENMP
-#include <omp.h>
-#endif
 
 /*
  * def vector_add(a, b, c):
@@ -41,21 +38,12 @@ static void VectorAdd_StlVec(benchmark::State& state) {
   rand_vec(a.begin(), a.end());
   rand_vec(b.begin(), b.end());
   for (auto _ : state) {
-#ifdef _OPENMP // this is the OpenMP standard ppd
-#pragma omp parallel for
-#endif
     for (auto x = 0; x < a.size(); ++x) {
       c[x] = a[x] + b[x];
     }
   }
 }
-BENCHMARK(VectorAdd_StlVec)->Name(
-#ifdef _OPENMP // this is the OpenMP standard ppd
-    "VectorAdd_StlVec_OpenMP"
-#else 
-    "VectorAdd_StlVec"
-#endif
-);
+BENCHMARK(VectorAdd_StlVec);
 
 struct VectorAdd : public ::benchmark::Fixture {
   std::valarray<double> val_arr1; // can't use {} due to BENCHMARK macro

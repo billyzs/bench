@@ -1,8 +1,6 @@
 include(FetchContent)
 
 #https://mac.r-project.org/openmp/#do
-function(find_openmp_appleclang)
-
 FetchContent_Declare(
     openmp_debug
     URL https://mac.r-project.org/openmp/openmp-16.0.4-darwin20-Debug.tar.gz 
@@ -16,7 +14,6 @@ FetchContent_Declare(
     TEST_COMMAND ""
     EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(openmp_debug)
 
 FetchContent_Declare(
     openmp_release
@@ -31,7 +28,10 @@ FetchContent_Declare(
     TEST_COMMAND ""
     EXCLUDE_FROM_ALL
 )
-FetchContent_MakeAvailable(openmp_release)
+FetchContent_MakeAvailable(
+    openmp_debug
+    openmp_release
+)
 
 add_library(openmp_cxx SHARED IMPORTED GLOBAL)
 add_dependencies(openmp_cxx openmp_debug openmp_release)
@@ -65,4 +65,5 @@ endif()
 add_library(OpenMP::OpenMP_CXX ALIAS openmp_cxx)
 add_library(OpenMP::OpenMP_C ALIAS openmp_cxx)
 set(OpenMP_FOUND 1 PARENT_SCOPE)
-endfunction()
+set(OpenMP_CXX_FOUND 1 PARENT_SCOPE)
+message(STATUS "Using Downloaded OpenMP")

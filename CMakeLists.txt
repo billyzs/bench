@@ -5,8 +5,10 @@ project(
     VERSION 0.0.1
     LANGUAGES C CXX
 )
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     message(FATAL_ERROR "UNSUPPORTED PLATFORM")
+else()
+    set(CMAKE_MACOSX_RPATH 1)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -18,6 +20,11 @@ enable_cache()
 
 # official doc requires NO_MODULE which is the same as config
 add_subdirectory(cmake/deps/Eigen3)
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    find_package(OpenMP)
+else()
+    add_subdirectory(cmake/deps/OpenMP)
+endif()
 set(BENCHMARK_ENABLE_TESTING NO)
 include(FetchContent)
 FetchContent_Declare(
@@ -52,13 +59,6 @@ FetchContent_MakeAvailable(
     mlx 
     benchmark
 )
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-    include(cmake/omp.cmake)
-    find_openmp_appleclang()
-else()
-    find_package(OpenMP)
-endif()
 add_library(bench_compile_opts INTERFACE)
 add_library(bench::compile_opts ALIAS bench_compile_opts)
 
@@ -132,6 +132,19 @@ if(Eigen3_FOUND)
     )
 endif()
 
+if(OpenMP_CXX_FOUND)
+    add_library(test_openmp STATIC
+        test_openmp.cpp
+    )
+    target_link_libraries(test_openmp
+    PRIVATE
+	OpenMP::OpenMP_CXX
+        bench_compile_opts
+        benchmark::benchmark
+    )
+endif()
+
+
 add_executable(main
     test_mlx.cpp
     main.cpp
@@ -141,10 +154,13 @@ target_link_libraries(main
 PRIVATE
     bench_compile_opts
     tutorial
-    $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
+    $<TARGET_NAME_IF_EXISTS::test_openmp>
     $<TARGET_NAME_IF_EXISTS:test_eigen>
     benchmark::benchmark
 )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    add_dependencies(main test_openmp)  # HACK until #3 is solved
+endif()
 
 enable_testing()
 add_test(
