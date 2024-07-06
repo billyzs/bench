@@ -1,0 +1,18 @@
+include(FetchContent)
+set(BUILD_TESTING OFF)
+set(EIGEN_BUILD_TESTING OFF)
+set(EIGEN_BUILD_PKGCONFIG OFF)
+set(EIGEN_BUILD_DOC OFF)
+set(EIGEN_BUILD_DEMOS OFF)
+set(EIGEN_LEAVE_TEST_IN_ALL_TARGET OFF)
+set(_EIGEN_VERSION 3.4.0)
+FetchContent_Declare(
+    Eigen3
+    GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+    GIT_TAG        ${_EIGEN_VERSION} 
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TURE
+    EXCLUDE_FROM_ALL
+    FIND_PACKAGE_ARGS ${_EIGEN_VERSION} CONFIG NAMES Eigen3
+)
+FetchContent_MakeAvailable(Eigen3)

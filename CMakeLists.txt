@@ -18,10 +18,20 @@ include(cmake/Cache.cmake)
 enable_cache()
 
 # official doc requires NO_MODULE which is the same as config
-find_package(Eigen3 3.4.0 REQUIRED CONFIG)
-find_package(benchmark REQUIRED)
-
+add_subdirectory(cmake/deps/Eigen3)
+set(BENCHMARK_ENABLE_TESTING NO)
 include(FetchContent)
+FetchContent_Declare(
+    benchmark 
+    GIT_REPOSITORY https://github.com/google/benchmark.git
+    GIT_TAG        v1.8.4
+    GIT_SHALLOW    TRUE
+    GIT_PROGRESS   TURE
+    EXCLUDE_FROM_ALL
+    FIND_PACKAGE_ARGS
+)
+
+
 set(MLX_BUILD_TESTS OFF CACHE INTERNAL "")
 set(MLX_BUILD_EXAMPLES OFF CACHE INTERNAL "")
 set(MLX_BUILD_BENCHMARKS OFF CACHE INTERNAL "")
@@ -36,9 +46,13 @@ FetchContent_Declare(
     # this makes FetchContent try find_package() with the supplied arguments first;
     # since we are requiring a version that is not available in brew, it will fall
     # back to building from source
+    EXCLUDE_FROM_ALL
     FIND_PACKAGE_ARGS 0.15.2 EXACT
 )
-FetchContent_MakeAvailable(mlx)
+FetchContent_MakeAvailable(
+    mlx 
+    benchmark
+)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
     include(cmake/omp.cmake)
@@ -129,8 +143,8 @@ target_link_libraries(main
 PRIVATE
     bench_compile_opts
     tutorial
-    $<$<BOOL:OpenMP_FOUND>:OpenMP::OpenMP_CXX>
-    Eigen3::Eigen
+    $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
+    $<TARGET_NAME_IF_EXISTS:test_eigen>
     benchmark::benchmark
 )
 
