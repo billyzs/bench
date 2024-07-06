@@ -5,6 +5,9 @@ project(
     VERSION 0.0.1
     LANGUAGES C CXX
 )
+message(STATUS "Using CMake version: ${CMAKE_VERSION}")
+message(STATUS "${CMAKE_SYSTEM_PROGRAM_PATH}")
+
 if(NOT CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     message(FATAL_ERROR "UNSUPPORTED PLATFORM")
 else()
