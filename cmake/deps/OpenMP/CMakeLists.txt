@@ -135,5 +135,5 @@ set(OpenMP_CXX_FOUND
 )
 message(
   STATUS
-  "Using Downloaded OpenMP"
+    "Using Downloaded OpenMP"
 )

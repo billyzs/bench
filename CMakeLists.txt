@@ -10,11 +10,13 @@ project(
   LANGUAGES
     C CXX
 )
-message(STATUS
-          "Using CMake version: ${CMAKE_VERSION}"
+message(
+  STATUS
+    "Using CMake version: ${CMAKE_VERSION}"
 )
-message(STATUS
-          "${CMAKE_SYSTEM_PROGRAM_PATH}"
+message(
+  STATUS
+    "${CMAKE_SYSTEM_PROGRAM_PATH}"
 )
 
 if(NOT
