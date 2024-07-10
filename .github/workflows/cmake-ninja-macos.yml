@@ -30,18 +30,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Setup job variables
+    - name: Setup variables
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: variables
       # use CMake because it can automatically handle Windows path separator
       shell: cmake --debug-output --trace --trace-expand --trace-format=human -P {0}
       run: |
-        file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)
+        file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)  
         file(TO_NATIVE_PATH "${{ github.workspace }}/tools-cache" tools_cache_dir)
-        file(TO_NATIVE_PATH "${{ github.workspace }}/ccache-cache" ccache_dir)
-        file(APPEND "$ENV{GITHUB_OUTPUT}" "build-output-dir=${build_output_dir}\n")
-        file(APPEND "$ENV{GITHUB_OUTPUT}" "tools-cache-dir=${tools_cache_dir}\n")
-        file(APPEND "$ENV{GITHUB_OUTPUT}" "ccache-cache-dir=${ccache_dir}\n")
+        file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" ccache_dir)
+        file(TO_NATIVE_PATH "${{ github.workspace }}/cmake/download-build-tools.cmake" download_script)
+        string(JOIN \n GH_OUTPUT
+          "build-output-dir=${build_output_dir}"
+          "tools-cache-dir=${tools_cache_dir}"
+          "ccache-cache-dir=${ccache_dir}"
+          "download-script=${download_script}"
+        )
+        file(CONFIGURE OUTPUT "$ENV{GITHUB_OUTPUT}" CONTENT ${GH_OUTPUT})
         file(MAKE_DIRECTORY
           build_output_dir
           tools_cache_dir
@@ -64,7 +69,7 @@ jobs:
       run: >
         cmake --debug-output --trace --trace-expand --trace-format=human
         -D CWD=${{ steps.variables.outputs.tools-cache-dir }}
-        -P ${{ github.workspace }}/cmake/download-build-tools.cmake
+        -P ${{ steps.variables.outputs.download-script }}
 
     - name: Setup build cache
       id: ccache-cache
