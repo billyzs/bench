@@ -36,6 +36,7 @@ jobs:
       # use CMake because it can automatically handle Windows path separator
       shell: cmake --debug-output --trace --trace-expand --trace-format=human -P {0}
       run: |
+        execute_process(COMMAND "git" "log" "-1" "--format=%cd" "--date=short" OUTPUT_VARIABLE today)
         file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)  
         file(TO_NATIVE_PATH "${{ github.workspace }}/tools-cache" tools_cache_dir)
         file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" ccache_dir)
@@ -45,6 +46,7 @@ jobs:
           "tools-cache-dir=${tools_cache_dir}"
           "ccache-cache-dir=${ccache_dir}"
           "download-script=${download_script}"
+          "commit-date=${today}"
         )
         file(CONFIGURE OUTPUT "$ENV{GITHUB_OUTPUT}" CONTENT ${GH_OUTPUT})
         file(MAKE_DIRECTORY
@@ -72,14 +74,15 @@ jobs:
         -P ${{ steps.variables.outputs.download-script }}
 
     - name: Setup build cache
-      id: ccache-cache
+      id: build-cache
       uses: actions/cache@v4.0.2
       with:
         path: ${{ steps.variables.outputs.ccache-cache-dir }}
         #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
-        key: ${{ runner.os }}-build-cache-run-${{ matrix.build_type }}-${{ github.run_id }}
+        key: ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-id-${{ github.run_id }}
         restore-keys: |
-          ${{ runner.os }}-build-cache-run-${{ matrix.build_type }}
+          ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-
+          ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-
 
     - name: Configure With Ninja 
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
