@@ -45,8 +45,23 @@ set(CMAKE_CXX_EXTENSIONS
 set(CMAKE_EXPORT_COMPILE_COMMANDS
     ON
 )
-include(cmake/Cache.cmake)
-enable_cache()
+if(NOT
+   DISABLE_CACHE
+)
+  include(cmake/Cache.cmake)
+  enable_cache()
+else()
+  unset(CMAKE_CXX_COMPILER_LAUNCHER)
+  unset(CMAKE_C_COMPILER_LAUNCHER)
+  unset(
+    CMAKE_CXX_COMPILERLAUNCHER
+    CACHE
+  )
+  unset(
+    CMAKE_C_COMPILERLAUNCHER
+    CACHE
+  )
+endif()
 
 set(CPM_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake"

@@ -32,16 +32,29 @@ function(enable_cache)
         "explicitly supported entries are ${CACHE_OPTION_VALUES}"
     )
   endif()
-
-  find_program(
-    CACHE_BINARY
-    NAMES
-      ${CACHE_OPTION_VALUES}
+  if(IS_EXECUTABLE
+     ${CMAKE_CXX_COMPILER_LAUNCHER}
   )
-  if(CACHE_BINARY)
-    message(STATUS
-              "${CACHE_BINARY} found and enabled"
+    set(CACHE_BINARY
+        ${CMAKE_CXX_COMPILER_LAUNCHER}
     )
+  elseif(
+    IS_EXECUTABLE
+    ${CMAKE_C_COMPILER_LAUNCHER}
+  )
+    set(CACHE_BINARY
+        ${CMAKE_C_COMPILER_LAUNCHER}
+    )
+  else()
+
+    find_program(
+      CACHE_BINARY
+      NAMES
+        ${CACHE_OPTION_VALUES} ${CMAKE_CXX_COMPILER_LAUNCHER}
+        ${CMAKE_C_COMPILER_LAUNCHER}
+    )
+  endif()
+  if(CACHE_BINARY)
     set(CMAKE_CXX_COMPILER_LAUNCHER
         ${CACHE_BINARY}
         CACHE
@@ -51,6 +64,15 @@ function(enable_cache)
         ${CACHE_BINARY}
         CACHE
           FILEPATH "C compiler cache used"
+    )
+    execute_process(
+      COMMAND
+        ${CACHE_BINARY} --version
+      OUTPUT_VARIABLE
+        cache_cmd_ver
+    )
+    message(STATUS
+              "${CACHE_BINARY} found and enabled; version\n${cache_cmd_ver}"
     )
   else()
     message(WARNING

@@ -280,8 +280,26 @@ if(${CMAKE_HOST_SYSTEM_NAME}
   )
 endif()
 
-file(
-  APPEND
-  "$ENV{GITHUB_PATH}"
-  "${BIN}${path_separator}${cmake_dir}"
+if($ENV{GITHUB_ACTIONS}
+   STREQUAL
+   "true"
 )
+  file(
+    APPEND
+    "$ENV{GITHUB_PATH}"
+    "${BIN}${path_separator}${cmake_dir}"
+  )
+  # on CI, set some other paths in case it's useful
+  file(
+    TO_NATIVE_PATH
+    "${BIN}/ccache\n"
+    ccache_bin
+  )
+  file(
+    CONFIGURE
+    OUTPUT
+    "$ENV{GITHUB_OUTPUT}"
+    CONTENT
+    "ccache-bin=${ccache_bin}"
+  )
+endif()
