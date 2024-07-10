@@ -10,3 +10,14 @@ target_link_libraries(
   PRIVATE
     bench_compile_opts
 )
+
+add_executable(
+  mlx_tutorial_main
+  tutorial_main.cpp
+)
+
+target_link_libraries(
+  mlx_tutorial_main
+  PRIVATE
+    mlx_tutorial bench_compile_opts
+)
