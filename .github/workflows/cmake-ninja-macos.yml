@@ -39,12 +39,12 @@ jobs:
         execute_process(COMMAND "git" "log" "-1" "--format=%cd" "--date=short" OUTPUT_VARIABLE today)
         file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)  
         file(TO_NATIVE_PATH "${{ github.workspace }}/tools-cache" tools_cache_dir)
-        file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" ccache_dir)
+        file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" build_cache_dir)
         file(TO_NATIVE_PATH "${{ github.workspace }}/cmake/download-build-tools.cmake" download_script)
         string(JOIN \n GH_OUTPUT
           "build-output-dir=${build_output_dir}"
           "tools-cache-dir=${tools_cache_dir}"
-          "ccache-cache-dir=${ccache_dir}"
+          "build-cache-dir=${build_cache_dir}"
           "download-script=${download_script}"
           "commit-date=${today}"
         )
@@ -52,7 +52,7 @@ jobs:
         file(MAKE_DIRECTORY
           build_output_dir
           tools_cache_dir
-          ccache_dir
+          build_cache_dir
         )
 
     - name: Setup tools cache
@@ -60,7 +60,7 @@ jobs:
       uses: actions/cache@v4.0.2
       with:
         path: ${{ steps.variables.outputs.tools-cache-dir }}
-        #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
+        #key: ${{ hashFiles('**/') }}
         key: ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-ccache-${{ env.CCACHE_VERSION }}
         restore-keys: |
           ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-
@@ -77,7 +77,7 @@ jobs:
       id: build-cache
       uses: actions/cache@v4.0.2
       with:
-        path: ${{ steps.variables.outputs.ccache-cache-dir }}
+        path: ${{ steps.variables.outputs.build-cache-dir }}
         #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
         key: ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-id-${{ github.run_id }}
         restore-keys: |
