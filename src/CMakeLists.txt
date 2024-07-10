@@ -1,0 +1,12 @@
+add_library(
+  mlx_tutorial
+  STATIC
+  tutorial.cpp
+)
+target_link_libraries(
+  mlx_tutorial
+  PUBLIC
+    $<BUILD_INTERFACE:mlx>
+  PRIVATE
+    bench_compile_opts
+)

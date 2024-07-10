@@ -24,7 +24,7 @@ set(TMP
 
 message(
   WARNING
-    "Using host CMake version: ${CMAKE_VERSION} on architecture ${CMAKE_HOST_SYSTEM_PROCESSOR}"
+    "Using host CMake version: ${CMAKE_VERSION} on architecture ${CMAKE_SYSTEM_PROCESSOR}"
 )
 
 if(${CMAKE_HOST_SYSTEM_NAME}
