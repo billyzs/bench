@@ -7,6 +7,7 @@ env:
   CMAKE_VERSION: "3.30.0"
   NINJA_VERSION: "1.12.1"
   CCACHE_VERSION: "4.10.1"
+  BUILD_TESTING: "ON"
 
 on:
   push:
@@ -65,28 +66,28 @@ jobs:
         -D CWD=${{ steps.variables.outputs.tools-cache-dir }}
         -P ${{ github.workspace }}/cmake/download-build-tools.cmake
 
-    - name: Setup ccache cache
+    - name: Setup build cache
       id: ccache-cache
       uses: actions/cache@v4.0.2
       with:
         path: ${{ steps.variables.outputs.ccache-cache-dir }}
         #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
-        key: ${{ runner.os }}-ccache-cache-run-${{ matrix.build_type }}-${{ github.run_id }}
+        key: ${{ runner.os }}-build-cache-run-${{ matrix.build_type }}-${{ github.run_id }}
         restore-keys: |
-          ${{ runner.os }}-ccache-cache-run-${{ matrix.build_type }}
+          ${{ runner.os }}-build-cache-run-${{ matrix.build_type }}
 
     - name: Configure With Ninja 
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       # TODO this is bashism and doesn't work in Win
       run: >
-        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.ccache-cache-dir }}
+        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
         cmake -GNinja
         -D CMAKE_C_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
         -D CMAKE_CXX_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
-        -D CPM_SOURCE_CACHE=${{ steps.variables.outputs.ccache-cache-dir }}
+        -D CPM_SOURCE_CACHE=${{ steps.variables.outputs.build-cache-dir }}
         -D CMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -D BUILD_TESTING=ON
+        -D BUILD_TESTING=${{ env.BUILD_TESTING }}
         -B ${{ steps.variables.outputs.build-output-dir }}
         -S ${{ github.workspace }}
 
@@ -95,7 +96,7 @@ jobs:
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # TODO this is still bashism, needs to be in CMake if running on Win
       run: >
-        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.ccache-cache-dir }}
+        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
         cmake --build ${{ steps.variables.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
@@ -103,4 +104,5 @@ jobs:
       # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: >
-        ctest --progress --output-on-failure --schedule-random --no-tests=error --test-dir tests --build-config ${{ matrix.build_type }}
+        ctest --progress --output-on-failure --schedule-random --no-tests=error
+        --test-dir tests --build-config ${{ matrix.build_type }}
