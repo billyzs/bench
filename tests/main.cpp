@@ -2,8 +2,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdio>
-#include <iostream>
 #include <random>
 #include <valarray>
 #include <vector>
@@ -45,7 +45,7 @@ static void VectorAdd_StlVec(benchmark::State& state) {
 }
 BENCHMARK(VectorAdd_StlVec);
 
-struct VectorAdd : public ::benchmark::Fixture {
+struct ValarrayFixture : public ::benchmark::Fixture {
   std::valarray<double> val_arr1; // can't use {} due to BENCHMARK macro
   std::valarray<double> val_arr2;
   std::valarray<double> val_arr3;
@@ -60,16 +60,16 @@ struct VectorAdd : public ::benchmark::Fixture {
   void TearDown(::benchmark::State&) {}
 };
 
-BENCHMARK_DEFINE_F(VectorAdd, Valarray)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(ValarrayFixture, Add)(benchmark::State& st) {
   // this is reasonably fast, often a tiny bit faster than the raw loop
   for (auto _ : st) {
     ::benchmark::DoNotOptimize(val_arr3);
     val_arr3 = val_arr1 + val_arr2;
   }
 }
-BENCHMARK_REGISTER_F(VectorAdd, Valarray);
+BENCHMARK_REGISTER_F(ValarrayFixture, Add);
 
-BENCHMARK_DEFINE_F(VectorAdd, StlAdd)(benchmark::State& st) {
+BENCHMARK_DEFINE_F(ValarrayFixture, StlAdd)(benchmark::State& st) {
   // runs at about the same speed as EigenAdd
   // we are probably lucky here because std::plus<>() resolved to
   // Eigen's efficient version of add
@@ -82,6 +82,31 @@ BENCHMARK_DEFINE_F(VectorAdd, StlAdd)(benchmark::State& st) {
         std::plus<>());
   }
 }
-BENCHMARK_REGISTER_F(VectorAdd, StlAdd);
+BENCHMARK_REGISTER_F(ValarrayFixture, StlAdd);
+
+BENCHMARK_DEFINE_F(ValarrayFixture, Trig)(benchmark::State& st) {
+  // this is reasonably fast, often a tiny bit faster than the raw loop
+  for (auto _ : st) {
+    ::benchmark::DoNotOptimize(val_arr3);
+    // val_arr3 = std::sin(val_arr1) + std::cos(val_arr2);
+    val_arr3 = std::atan2(val_arr1, val_arr2);
+  }
+}
+BENCHMARK_REGISTER_F(ValarrayFixture, Trig);
+
+static void StlVector_Atan2(benchmark::State& state) {
+  auto a = std::vector<double>(numElements);
+  auto b = std::vector<double>(numElements);
+  auto c = std::vector<double>(numElements);
+  rand_vec(a.begin(), a.end());
+  rand_vec(b.begin(), b.end());
+  for (auto _ : state) {
+    for (size_t x = 0; x < a.size(); ++x) {
+      ::benchmark::DoNotOptimize(c);
+      c[x] = std::atan2(a[x], b[x]);
+    }
+  }
+}
+BENCHMARK(StlVector_Atan2);
 
 BENCHMARK_MAIN();

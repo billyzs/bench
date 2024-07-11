@@ -6,7 +6,7 @@
 
 using namespace mlx::core;
 
-struct MlxVector : public ::benchmark::Fixture {
+struct MlxFixture : public ::benchmark::Fixture {
   // once mlx arrays are included as data members of a subclass of Fixture
   // program will segfault on start; tried multiple inheritance, direct
   // inclusion of MlxVectorData, direct inclusion + rule of 5,
@@ -25,18 +25,27 @@ struct MlxVector : public ::benchmark::Fixture {
   void TearDown(::benchmark::State&) override {
     teardown();
   }
-  ~MlxVector() {
+  ~MlxFixture() {
     teardown();
   };
 };
 
-BENCHMARK_DEFINE_F(MlxVector, MlxAdd)(::benchmark::State& st) {
+BENCHMARK_DEFINE_F(MlxFixture, MlxTrig)(::benchmark::State& st) {
+  for (auto _ : st) {
+    // dd->v3 = mlx::core::sin(dd->v1) + mlx::core::cos(dd->v2);
+    // eval(dd->v3);
+    dd->v3 = mlx::core::arctan2(dd->v1, dd->v2);
+    eval(dd->v3);
+  }
+}
+BENCHMARK_REGISTER_F(MlxFixture, MlxTrig);
+BENCHMARK_DEFINE_F(MlxFixture, MlxAdd)(::benchmark::State& st) {
   for (auto _ : st) {
     dd->v3 = dd->v1 + dd->v2;
     eval(dd->v3);
   }
 }
-BENCHMARK_REGISTER_F(MlxVector, MlxAdd);
+BENCHMARK_REGISTER_F(MlxFixture, MlxAdd);
 void VectorAdd_Mlx(::benchmark::State& st, const mlx::core::Dtype dtype) {
   MlxVectorData d(numElements * st.range(0), dtype);
   for (auto _ : st) {

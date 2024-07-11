@@ -26,7 +26,7 @@ if(OpenMP_CXX_FOUND)
     bench_main
     test_openmp
   ) # Hack to get the build system to compile openmp code (but not actually link
-    # it until #3 is fixed)
+  # it until #3 is fixed)
 endif()
 
 enable_testing()
@@ -34,4 +34,11 @@ add_test(
   NAME bench_main.smoke_test
   COMMAND
     bench_main --benchmark_list_tests=true
+    --benchmark_enable_random_interleaving=true
+)
+add_test(
+  NAME bench_main.Trig_test
+  COMMAND
+    bench_main --benchmark_filter=Trig
+    --benchmark_enable_random_interleaving=true
 )
