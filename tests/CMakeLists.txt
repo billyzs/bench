@@ -5,6 +5,31 @@ add_executable(
   main.cpp
 )
 
+if(${CMAKE_SYSTEM_NAME}
+   STREQUAL
+   "Darwin"
+)
+  target_sources(
+    bench_main
+    PRIVATE
+      test_accelerate.cpp
+  )
+  find_library(
+    ACCELERATE_LBRARIES
+    Accelerate
+  )
+  target_link_libraries(
+    bench_main
+    PRIVATE
+      ${ACCELERATE_LIBRARIES}
+  )
+  target_compile_definitions(
+    bench_main
+    PRIVATE
+      ACCELERATE_NEW_LAPACK
+  )
+endif()
+
 target_link_libraries(
   bench_main
   PRIVATE
