@@ -6,14 +6,14 @@ name: CMake, Ninja on macOS
 env:
   CMAKE_VERSION: "3.30.0"
   NINJA_VERSION: "1.12.1"
-  CCACHE_VERSION: "4.10.1"
+  CCACHE_VERSION: "4.10.2"
   BUILD_TESTING: "ON"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -28,89 +28,89 @@ jobs:
         c_compiler: [clang]
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup variables
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: variables
-      # use CMake because it can automatically handle Windows path separator
-      shell: cmake --debug-output --trace --trace-expand --trace-format=human -P {0}
-      run: |
-        execute_process(COMMAND "git" "log" "-1" "--format=%cd" "--date=short" OUTPUT_VARIABLE today)
-        file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)  
-        file(TO_NATIVE_PATH "${{ github.workspace }}/tools-cache" tools_cache_dir)
-        file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" build_cache_dir)
-        file(TO_NATIVE_PATH "${{ github.workspace }}/cmake/download-build-tools.cmake" download_script)
-        string(JOIN \n GH_OUTPUT
-          "build-output-dir=${build_output_dir}"
-          "tools-cache-dir=${tools_cache_dir}"
-          "build-cache-dir=${build_cache_dir}"
-          "download-script=${download_script}"
-          "commit-date=${today}"
-        )
-        file(CONFIGURE OUTPUT "$ENV{GITHUB_OUTPUT}" CONTENT ${GH_OUTPUT})
-        file(MAKE_DIRECTORY
-          build_output_dir
-          tools_cache_dir
-          build_cache_dir
-        )
+      - uses: actions/checkout@v4
 
-    - name: Setup tools cache
-      id: cache
-      uses: actions/cache@v4.0.2
-      with:
-        path: ${{ steps.variables.outputs.tools-cache-dir }}
-        #key: ${{ hashFiles('**/') }}
-        key: ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-ccache-${{ env.CCACHE_VERSION }}
-        restore-keys: |
-          ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-
-          ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-
-    
-    - name: Tools Download
-      # at least the macOS runner has CMake and brew in path
-      run: >
-        cmake --debug-output --trace --trace-expand --trace-format=human
-        -D CWD=${{ steps.variables.outputs.tools-cache-dir }}
-        -P ${{ steps.variables.outputs.download-script }}
+      - name: Setup variables
+        # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+        id: variables
+        # use CMake because it can automatically handle Windows path separator
+        shell: cmake --debug-output --trace --trace-expand --trace-format=human -P {0}
+        run: |
+          execute_process(COMMAND "git" "log" "-1" "--format=%cd" "--date=short" OUTPUT_VARIABLE today)
+          file(TO_NATIVE_PATH "${{ github.workspace }}/build-${{ matrix.build_type }}" build_output_dir)  
+          file(TO_NATIVE_PATH "${{ github.workspace }}/tools-cache" tools_cache_dir)
+          file(TO_NATIVE_PATH "${{ github.workspace }}/build-cache" build_cache_dir)
+          file(TO_NATIVE_PATH "${{ github.workspace }}/cmake/download-build-tools.cmake" download_script)
+          string(JOIN \n GH_OUTPUT
+            "build-output-dir=${build_output_dir}"
+            "tools-cache-dir=${tools_cache_dir}"
+            "build-cache-dir=${build_cache_dir}"
+            "download-script=${download_script}"
+            "commit-date=${today}"
+          )
+          file(CONFIGURE OUTPUT "$ENV{GITHUB_OUTPUT}" CONTENT ${GH_OUTPUT})
+          file(MAKE_DIRECTORY
+            build_output_dir
+            tools_cache_dir
+            build_cache_dir
+          )
 
-    - name: Setup build cache
-      id: build-cache
-      uses: actions/cache@v4.0.2
-      with:
-        path: ${{ steps.variables.outputs.build-cache-dir }}
-        #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
-        key: ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-id-${{ github.run_id }}
-        restore-keys: |
-          ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-
-          ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-
+      - name: Setup tools cache
+        id: cache
+        uses: actions/cache@v4.0.2
+        with:
+          path: ${{ steps.variables.outputs.tools-cache-dir }}
+          #key: ${{ hashFiles('**/') }}
+          key: ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-ccache-${{ env.CCACHE_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-ninja-${{ env.NINJA_VERSION }}-
+            ${{ runner.os }}-tools-cache-cmake-${{ env.CMAKE_VERSION }}-
 
-    - name: Configure With Ninja 
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      # TODO this is bashism and doesn't work in Win
-      run: >
-        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
-        cmake -GNinja
-        -D CMAKE_C_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
-        -D CMAKE_CXX_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
-        -D CPM_SOURCE_CACHE=${{ steps.variables.outputs.build-cache-dir }}
-        -D CMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -D BUILD_TESTING=${{ env.BUILD_TESTING }}
-        -B ${{ steps.variables.outputs.build-output-dir }}
-        -S ${{ github.workspace }}
+      - name: Tools Download
+        # at least the macOS runner has CMake and brew in path
+        run: >
+          cmake --debug-output --trace --trace-expand --trace-format=human
+          -D CWD=${{ steps.variables.outputs.tools-cache-dir }}
+          -P ${{ steps.variables.outputs.download-script }}
 
+      - name: Setup build cache
+        id: build-cache
+        uses: actions/cache@v4.0.2
+        with:
+          path: ${{ steps.variables.outputs.build-cache-dir }}
+          #key: ${{ runner.os }}-build-cache-${{ hashFiles('**/') }}
+          key: ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-id-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-run-${{ matrix.build_type }}-
+            ${{ runner.os }}-build-cache-commit-date-${{ steps.variables.outputs.commit-date }}-
 
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # TODO this is still bashism, needs to be in CMake if running on Win
-      run: >
-        CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
-        cmake --build ${{ steps.variables.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      - name: Configure With Ninja
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        # TODO this is bashism and doesn't work in Win
+        run: >
+          CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
+          cmake -GNinja
+          -D CMAKE_C_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
+          -D CMAKE_CXX_COMPILER_LAUNCHER="${{ steps.variables.outputs.tools-cache-dir }}/bin/ccache"
+          -D CPM_SOURCE_CACHE=${{ steps.variables.outputs.build-cache-dir }}
+          -D CMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -D BUILD_TESTING=${{ env.BUILD_TESTING }}
+          -B ${{ steps.variables.outputs.build-output-dir }}
+          -S ${{ github.workspace }}
 
-    - name: Test
-      working-directory: ${{ steps.variables.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: >
-        ctest --progress --output-on-failure --schedule-random --no-tests=error
-        --test-dir tests --build-config ${{ matrix.build_type }}
+      - name: Build
+        # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+        # TODO this is still bashism, needs to be in CMake if running on Win
+        run: >
+          CCACHE_BASEDIR=${{ github.workspace }} CCACHE_DIR=${{ steps.variables.outputs.build-cache-dir }}
+          cmake --build ${{ steps.variables.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+
+      - name: Test
+        working-directory: ${{ steps.variables.outputs.build-output-dir }}
+        # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+        run: >
+          ctest --progress --output-on-failure --schedule-random --no-tests=error
+          --test-dir tests --build-config ${{ matrix.build_type }}
+
