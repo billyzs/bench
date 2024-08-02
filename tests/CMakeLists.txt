@@ -67,3 +67,16 @@ add_test(
     bench_main --benchmark_filter=Trig
     --benchmark_enable_random_interleaving=true
 )
+find_program(
+  just_FOUND
+  just
+)
+if(just_FOUND)
+  add_test(
+    NAME just_test
+    WORKING_DIRECTORY
+      ${CMAKE_SOURCE_DIR}
+    COMMAND
+      just configure_no_tests
+  )
+endif()
