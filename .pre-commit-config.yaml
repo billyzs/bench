@@ -3,11 +3,11 @@ repos:
   - repo: https://github.com/cheshirekow/cmake-format-precommit
     rev: v0.6.13
     hooks:
-    - id: cmake-format
-      name: Format CMake related files
-      types_or: [cmake]
-      additional_dependencies:
-      - pyyaml
+      - id: cmake-format
+        name: Format CMake related files
+        types_or: [cmake]
+        additional_dependencies:
+          - pyyaml
   - repo: local
     hooks:
       - id: clang-format
@@ -15,4 +15,12 @@ repos:
         name: Format changed lines in CXX files
         types_or: [c, c++, objective-c, cuda]
         entry: scripts/clang-format-added-lines
-        pass_filenames: False  # script greps changed files from git
+        pass_filenames: False # script greps changed files from git
+  - repo: local
+    hooks:
+      - id: just-format
+        language: system
+        files: \.justfile
+        name: Format changed lines in justfile
+        entry: just --quiet --fmt --unstable
+        pass_filenames: False
