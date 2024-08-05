@@ -140,4 +140,11 @@ format_just:
     just --fmt --unstable
 
 [no-exit-message]
-fmt: format_cxx format_just
+format_cmake:
+    #!/usr/bin/env sh -eu
+    c=`git diff --name-only | rg "CMakeLists\.txt$|\.cmake$"`
+    s="${c//$'\n'/ }"
+    cmake-format -i ${s}
+
+[no-exit-message]
+fmt: format_cxx format_just format_cmake
