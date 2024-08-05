@@ -63,8 +63,11 @@ else()
   )
 endif()
 
-set(CPM_FILE
-    "${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake"
+cmake_path(
+  SET
+  CPM_FILE
+  NORMALIZE
+  "${CMAKE_CURRENT_BINARY_DIR}/../CPM.cmake"
 )
 set(CPM_EXPECTED_SHA1
     9fe00008cc8c5b172edb7100707af661b4e54b2f
@@ -72,7 +75,7 @@ set(CPM_EXPECTED_SHA1
       STRING "expected SHA1 sum of CPM.cmake version v0.40.0"
 ) # v0.40.0
 if(EXISTS
-   $CPM_FILE}
+   ${CPM_FILE}
 )
   file(
     SHA1
@@ -105,7 +108,15 @@ else()
     SHOW_PROGRESS
   )
 endif()
-include(${CPM_FILE})
+include(
+  ${CPM_FILE}
+  RESULT_VARIABLE
+    CPM_FILE
+)
+message(
+  STATUS
+    ${CPM_FILE}
+)
 
 # official doc requires NO_MODULE which is the same as config
 find_package(
@@ -113,6 +124,7 @@ find_package(
   3.4.0
   CONFIG
 )
+
 if(NOT
    TARGET
    Eigen3::Eigen
