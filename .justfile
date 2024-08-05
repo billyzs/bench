@@ -1,6 +1,6 @@
 alias b := build
 alias bat := build_and_test
-alias c := configure_no_tests
+alias c := configure
 alias cbt := check_build_type
 alias lt := list_tests
 alias s := sync
@@ -72,16 +72,15 @@ _check_build_type:
 
 # E.g. just configure 'ON' -DCMAKE_OSX_ARCHITECTURES='arm64\;x86_64'
 
-# run cmake configure step with Ninja and caching CPM
-configure BUILD_TESTING="OFF" +ADDITIONAL_ARGS='': check_build_type
+# run cmake configure step based on CMakePresets.json
+configure +ADDITIONAL_ARGS='': check_build_type
     cmake \
     --preset {{ BUILD_TYPE }} \
     {{ ADDITIONAL_ARGS }} \
     -S ./
 
-configure_no_tests: (configure "OFF")
-
-configure_with_tests: (configure "OFF" "-DBUILD_TESTING='ON'")
+# configure with testing enabled even if testing is disabled in CMakePresets.json
+configure_with_tests: (configure "-DBUILD_TESTING='ON'")
 
 # command can be passed e.g. just _build --verbose -t clean
 
@@ -92,7 +91,7 @@ _build +ADDITIONAL_ARGS="--verbose -t all":
 # can specify additional args as such: 'BUILD_TYPE=Release just b -t <tgt_name>'
 
 # by default, build all targets
-build +ADDITIONAL_ARGS="-t all": configure_no_tests (_build ADDITIONAL_ARGS)
+build +ADDITIONAL_ARGS="-t all": configure (_build ADDITIONAL_ARGS)
 
 # clean the current build type
 clean: (_build '--verbose -t clean')
