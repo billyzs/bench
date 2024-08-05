@@ -91,13 +91,13 @@ _build +ADDITIONAL_ARGS="--verbose -t all":
 
 # can specify additional args as such: 'BUILD_TYPE=Release just b -t <tgt_name>'
 
-# by default, build all targets excluding tests;
+# by default, build all targets
 build +ADDITIONAL_ARGS="-t all": configure_no_tests (_build ADDITIONAL_ARGS)
 
 # clean the current build type
 clean: (_build '--verbose -t clean')
 
-# E.g. just -t -R smoke_test -VV --debug
+# E.g. just t -R smoke_test -VV --debug
 
 # run all tests by default; skip building. E.g. 'just t -E Trig' excludes all tests with 'Trig' in name
 [no-exit-message]
@@ -123,6 +123,7 @@ _list_tests _BUILD_TYPE=BUILD_TYPE +ADDITIONAL_ARGS="-R .*":
 # print name of tests
 list_tests +ADDITIONAL_ARGS="-R .*": configure_with_tests (_list_tests BUILD_TYPE ADDITIONAL_ARGS)
 
+# fancy version of git pull with some sane defaults
 [no-exit-message]
 sync REPO='origin' REFSPEC='main' +ADDITIONAL_ARGS="":
     git pull \
@@ -131,14 +132,17 @@ sync REPO='origin' REFSPEC='main' +ADDITIONAL_ARGS="":
     {{ ADDITIONAL_ARGS }} \
     {{ REPO }} {{ REFSPEC }}
 
+# format all changed lines in c++ files (source and header)
 [no-exit-message]
 format_cxx:
     git diff -U0 --no-color --relative HEAD^ | scripts/clang-format-diff -p1 -i
 
+# format the justfile itself
 [no-exit-message]
 format_just:
     just --fmt --unstable
 
+# format cmake files in place
 [no-exit-message]
 format_cmake:
     #!/usr/bin/env sh -eu
