@@ -102,7 +102,7 @@ clean: (_build '--verbose -t clean')
 [no-exit-message]
 run_tests +TEST_ARGS="-R .*":
     ctest -F --parallel --progress --output-on-failure \
-    --preset Release \
+    --preset {{ BUILD_TYPE }} \
     --schedule-random --no-tests=error \
     {{ TEST_ARGS }} \
     --test-dir build/{{ BUILD_TYPE }}/tests
@@ -111,8 +111,7 @@ run_tests +TEST_ARGS="-R .*":
 # (notice the '' around the first argument, which is given to cmake --build)
 
 # by default build everything and run all tests; supply relevant arguments to build and run a specific test
-build_and_test BUILD_ARGS="-t all" +TEST_ARGS="-R .*":
-    configure_with_tests (_build BUILD_ARGS) (run_tests TEST_ARGS)
+build_and_test BUILD_ARGS="-t all" +TEST_ARGS="-R .*": configure_with_tests (_build BUILD_ARGS) (run_tests TEST_ARGS)
 
 # the unsafe version of list_tests; assume the configure step has been run manually
 [no-exit-message]
