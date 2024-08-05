@@ -1,6 +1,7 @@
 alias b := build
 alias bat := build_and_test
 alias c := configure_no_tests
+alias cbt := check_build_type
 alias lt := list_tests
 alias s := sync
 alias t := run_tests
@@ -18,7 +19,6 @@ alias t := run_tests
 # not live past the ';'
 
 BUILD_TYPE := env("BUILD_TYPE", "Debug")
-_known_build_types := "Debug,Release,RelWithDebInfo,MinSizeRel"
 
 default:
     @just --choose
@@ -36,20 +36,39 @@ help:
      There are several hidden recipes such as _build that may be useful too, \
      see .justfile for all recipes and examples of advanced usages"
 
+# check if just is using one of the config types specified in CMakePresets.json
+[no-exit-message]
 check_build_type:
-    #!/usr/bin/env sh -eu
-    echo "just configured to use BUILD_TYPE={{ BUILD_TYPE }}"
-    IFS=',' read -ra valid_values <<< {{ _known_build_types }}
+    #!/usr/bin/env python3
+    import json
+    with open("./CMakePresets.json") as f:
+        p = json.load(f)
+    build_type = "{{ BUILD_TYPE }}"
+    known_build_types = set([c['name'] for c in p['configurePresets']])
+    if build_type not in known_build_types:
+        raise ValueError(f"{build_type=} is not one of the {known_build_types=}")
 
-    case "${valid_values[@]}" in 
-    *"{{ BUILD_TYPE }}"*)
+# check built type for environments that do not have python
+[no-exit-message]
+_check_build_type:
+    #!/usr/bin/env sh -eu
+    known_build_types="Debug,Release,RelWithDebInfo,MinSizeRel"
+    IFS=',' read -r -a valid_values <<< "$known_build_types"
+    BUILD_TYPE="{{ BUILD_TYPE }}"
+    match_found=0
+    for value in "${valid_values[@]}"; do
+        if [ "$value" == "$BUILD_TYPE" ]; then
+            match_found=1
+            break
+        fi
+    done
+    if [ $match_found -eq 1 ]; then
+        echo "just configured to use ${BUILD_TYPE}"
         exit 0
-        ;;
-    *)
-        echo "BUILD_TYPE={{ BUILD_TYPE }} is not valid"
+    else
+        echo "NO - '$BUILD_TYPE' is not one of ${known_build_types}"
         exit 1
-        ;;
-    esac
+    fi
 
 # E.g. just configure 'ON' -DCMAKE_OSX_ARCHITECTURES='arm64\;x86_64'
 
