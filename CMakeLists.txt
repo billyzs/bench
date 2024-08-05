@@ -205,5 +205,6 @@ target_include_directories(
 add_subdirectory(src)
 
 if(BUILD_TESTING)
+  include(CTest)
   add_subdirectory(tests)
 endif()

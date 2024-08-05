@@ -1,0 +1,87 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "description": "common configuration options",
+      "generator": "Ninja",
+      "cacheVariables": {
+        "CPM_SOURCE_CACHE": "./build/cpm",
+        "CMAKE_POLICY_DEFAULT_CMP0091": "NEW"
+      }
+    },
+    {
+      "name": "Debug",
+      "inherits": [
+        "_base"
+      ],
+      "displayName": "Debugconfig",
+      "description": "",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "CMAKE_BUILD_TYPE": "Debug"
+      },
+      "binaryDir": "./build/Debug"
+    },
+    {
+      "name": "Release",
+      "inherits": [
+        "_base"
+      ],
+      "displayName": "Release config",
+      "description": "",
+      "cacheVariables": {
+        "BUILD_TESTING": "OFF",
+        "CMAKE_BUILD_TYPE": "Release"
+      },
+      "binaryDir": "./build/Release"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "Debug"
+    },
+    {
+      "name": "Release",
+      "configurePreset": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "_base",
+      "hidden": true,
+      "description": "common CTest config",
+      "output": {
+        "shortProgress": true,
+        "outputOnFailure": true
+      },
+      "execution": {
+        "scheduleRandom": true,
+        "enableFailover": true,
+        "noTestsAction": "error",
+        "jobs": 0
+      }
+    },
+    {
+      "name": "Debug",
+      "inherits": [
+        "_base"
+      ],
+      "configurePreset": "Debug"
+    },
+    {
+      "name": "Release",
+      "inherits": [
+        "_base"
+      ],
+      "configurePreset": "Release"
+    }
+  ]
+}

@@ -5,9 +5,6 @@ alias lt := list_tests
 alias s := sync
 alias t := run_tests
 
-cpm_source_cache := "build./CPM_modules"
-build_generator := "Ninja"
-
 # BUILD_TYPE Can either be specified inline e.g. 'BUILD_TYPE=Debug just c b',
 # or exported to the current shell interpreter by
 # export BUILD_TYPE=Release
@@ -59,23 +56,19 @@ check_build_type:
 # run cmake configure step with Ninja and caching CPM
 configure BUILD_TESTING="OFF" +ADDITIONAL_ARGS='': check_build_type
     cmake \
-    -G{{ build_generator }} \
-    -DBUILD_TESTING={{ BUILD_TESTING }} \
-    -DCMAKE_BUILD_TYPE={{ BUILD_TYPE }} \
-    -DCPM_SOURCE_CACHE={{ cpm_source_cache }} \
+    --preset {{ BUILD_TYPE }} \
     {{ ADDITIONAL_ARGS }} \
-    -S ./ \
-    -B ./build/{{ BUILD_TYPE }}
+    -S ./
 
 configure_no_tests: (configure "OFF")
 
-configure_with_tests: (configure "ON")
+configure_with_tests: (configure "OFF" "-DBUILD_TESTING='ON'")
 
 # command can be passed e.g. just _build --verbose -t clean
 
 # the quick version of build; assume the configure and build have been run manually
 _build +ADDITIONAL_ARGS="--verbose -t all":
-    cmake --build ./build/{{ BUILD_TYPE }} {{ ADDITIONAL_ARGS }}
+    cmake --build --preset={{ BUILD_TYPE }} {{ ADDITIONAL_ARGS }}
 
 # can specify additional args as such: 'BUILD_TYPE=Release just b -t <tgt_name>'
 
@@ -91,6 +84,7 @@ clean: (_build '--verbose -t clean')
 [no-exit-message]
 run_tests +TEST_ARGS="-R .*":
     ctest -F --parallel --progress --output-on-failure \
+    --preset Release \
     --schedule-random --no-tests=error \
     {{ TEST_ARGS }} \
     --test-dir build/{{ BUILD_TYPE }}/tests
@@ -104,12 +98,11 @@ build_and_test BUILD_ARGS="-t all" +TEST_ARGS="-R .*":
 
 # the unsafe version of list_tests; assume the configure step has been run manually
 [no-exit-message]
-_list_tests +ADDITIONAL_ARGS="-R .*":
-    @ctest --test-dir ./build/{{ BUILD_TYPE }}/tests -N {{ ADDITIONAL_ARGS }}
+_list_tests _BUILD_TYPE=BUILD_TYPE +ADDITIONAL_ARGS="-R .*":
+    @ctest --preset {{ _BUILD_TYPE }} -N {{ ADDITIONAL_ARGS }}
 
 # print name of tests
-list_tests +ADDITIONAL_ARGS="-R .*":
-    configure_with_tests (_list_tests BUILD_TYPE ADDITIONAL_ARGS)
+list_tests +ADDITIONAL_ARGS="-R .*": configure_with_tests (_list_tests BUILD_TYPE ADDITIONAL_ARGS)
 
 [no-exit-message]
 sync REPO='origin' REFSPEC='main' +ADDITIONAL_ARGS="":
