@@ -77,6 +77,6 @@ if(just_FOUND)
     WORKING_DIRECTORY
       ${CMAKE_SOURCE_DIR}
     COMMAND
-      just configure_no_tests
+      just configure
   )
 endif()
